@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2-Digit Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .calculator {
+      background: #16213e;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      width: 360px;
+    }
+
+    h2 {
+      color: #8899aa;
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .display {
+      background: #0f3460;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: right;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .display .expression {
+      color: #8899aa;
+      font-size: 16px;
+      min-height: 24px;
+      word-break: break-all;
+    }
+
+    .display .result {
+      color: #fff;
+      font-size: 40px;
+      font-weight: bold;
+      word-break: break-all;
+    }
+
+    .display .error {
+      color: #e94560;
+      font-size: 14px;
+      min-height: 20px;
+      margin-top: 4px;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      background: #1a1a40;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+
+    button:hover { background: #2a2a50; }
+    button:active { transform: scale(0.95); }
+
+    button.operator {
+      background: #e94560;
+      color: #fff;
+    }
+    button.operator:hover { background: #d13a52; }
+
+    button.clear {
+      background: #533483;
+      color: #fff;
+    }
+    button.clear:hover { background: #6a44a5; }
+
+    button.equals {
+      background: #00b894;
+      color: #fff;
+      grid-column: span 2;
+    }
+    button.equals:hover { background: #00a382; }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>2-Digit Calculator</h2>
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+      <div class="error" id="error"></div>
+    </div>
+    <div class="buttons">
+      <button class="clear" onclick="clearAll()">AC</button>
+      <button class="clear" onclick="toggleSign()">+/−</button>
+      <button class="clear" onclick="backspace()">⌫</button>
+      <button class="operator" onclick="setOperator('/')">÷</button>
+
+      <button onclick="appendDigit('7')">7</button>
+      <button onclick="appendDigit('8')">8</button>
+      <button onclick="appendDigit('9')">9</button>
+      <button class="operator" onclick="setOperator('*')">×</button>
+
+      <button onclick="appendDigit('4')">4</button>
+      <button onclick="appendDigit('5')">5</button>
+      <button onclick="appendDigit('6')">6</button>
+      <button class="operator" onclick="setOperator('-')">−</button>
+
+      <button onclick="appendDigit('1')">1</button>
+      <button onclick="appendDigit('2')">2</button>
+      <button onclick="appendDigit('3')">3</button>
+      <button class="operator" onclick="setOperator('+')">+</button>
+
+      <button onclick="appendDigit('0')" style="grid-column: span 2;">0</button>
+      <button class="equals" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    const MAX_DIGITS = 2; // Limit each operand to 2 digits
+    let currentInput = '';
+    let firstOperand = null;
+    let operator = null;
+    let waitingForSecond = false;
+    let lastResult = null;
+
+    const displayResult = document.getElementById('result');
+    const displayExpr = document.getElementById('expression');
+    const displayError = document.getElementById('error');
+
+    function updateDisplay() {
+      displayResult.textContent = currentInput || '0';
+      displayError.textContent = '';
+    }
+
+    function showError(msg) {
+      displayError.textContent = msg;
+    }
+
+    function appendDigit(digit) {
+      // If we just calculated a result and user types a digit, start fresh
+      if (lastResult !== null && !waitingForSecond) {
+        clearAll();
+      }
+      lastResult = null;
+
+      // Strip negative sign for length check
+      const raw = currentInput.replace('-', '');
+      if (raw.length >= MAX_DIGITS) {
+        showError('Max 2 digits per number');
+        return;
+      }
+
+      currentInput += digit;
+      updateDisplay();
+    }
+
+    function setOperator(op) {
+      displayError.textContent = '';
+
+      if (lastResult !== null) {
+        // Chain from previous result
+        firstOperand = lastResult;
+        lastResult = null;
+      } else if (currentInput !== '') {
+        if (firstOperand !== null && !waitingForSecond) {
+          calculate(); // chain operations
+          firstOperand = lastResult !== null ? lastResult : parseFloat(currentInput);
+          lastResult = null;
+        } else {
+          firstOperand = parseFloat(currentInput);
+        }
+      }
+
+      if (firstOperand === null) return;
+
+      operator = op;
+      waitingForSecond = true;
+
+      const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[op];
+      displayExpr.textContent = formatNumber(firstOperand) + ' ' + opSymbol;
+      currentInput = '';
+      updateDisplay();
+    }
+
+    function calculate() {
+      if (operator === null || firstOperand === null) return;
+
+      const second = currentInput !== '' ? parseFloat(currentInput) : null;
+      if (second === null) return;
+
+      // Validate both operands are within 2-digit range (-99 to 99)
+      if (Math.abs(firstOperand) > 99 || Math.abs(second) > 99) {
+        showError('Operands must be ≤ 2 digits');
+        return;
+      }
+
+      let result;
+      const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[operator];
+
+      switch (operator) {
+        case '+': result = firstOperand + second; break;
+        case '-': result = firstOperand - second; break;
+        case '*': result = firstOperand * second; break;
+        case '/':
+          if (second === 0) {
+            showError('Cannot divide by zero');
+            return;
+          }
+          result = firstOperand / second;
+          break;
+      }
+
+      // Round to avoid floating point issues
+      result = Math.round(result * 1e10) / 1e10;
+
+      displayExpr.textContent = formatNumber(firstOperand) + ' ' + opSymbol + ' ' + formatNumber(second) + ' =';
+      currentInput = formatNumber(result);
+      displayResult.textContent = currentInput;
+      displayError.textContent = '';
+
+      lastResult = result;
+      firstOperand = null;
+      operator = null;
+      waitingForSecond = false;
+    }
+
+    function formatNumber(n) {
+      if (Number.isInteger(n)) return n.toString();
+      return parseFloat(n.toFixed(6)).toString();
+    }
+
+    function clearAll() {
+      currentInput = '';
+      firstOperand = null;
+      operator = null;
+      waitingForSecond = false;
+      lastResult = null;
+      displayExpr.textContent = '';
+      displayError.textContent = '';
+      updateDisplay();
+    }
+
+    function backspace() {
+      if (lastResult !== null) {
+        clearAll();
+        return;
+      }
+      currentInput = currentInput.slice(0, -1);
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      if (currentInput === '' || currentInput === '0') return;
+      if (currentInput.startsWith('-')) {
+        currentInput = currentInput.slice(1);
+      } else {
+        currentInput = '-' + currentInput;
+      }
+      updateDisplay();
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') appendDigit(e.key);
+      else if (e.key === '+') setOperator('+');
+      else if (e.key === '-') setOperator('-');
+      else if (e.key === '*') setOperator('*');
+      else if (e.key === '/') { e.preventDefault(); setOperator('/'); }
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Backspace') backspace();
+      else if (e.key === 'Escape') clearAll();
+    });
+  </script>
+</body>
+</html>
