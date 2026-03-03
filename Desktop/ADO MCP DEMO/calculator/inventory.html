@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Manager</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      margin-bottom: 32px;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .top-bar input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .top-bar input[type="text"]:focus {
+      border-color: #38bdf8;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: #38bdf8;
+      color: #0f172a;
+    }
+
+    .btn-primary:hover { background: #7dd3fc; }
+
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-danger:hover { background: #f87171; }
+
+    .btn-edit {
+      background: #f59e0b;
+      color: #0f172a;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .btn-edit:hover { background: #fbbf24; }
+
+    .btn-secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .btn-secondary:hover { background: #475569; }
+
+    .btn-export {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .btn-export:hover { background: #34d399; }
+
+    /* ── Stats ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
+    /* ── Form Modal ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .overlay.active { display: flex; }
+
+    .modal {
+      background: #1e293b;
+      border-radius: 16px;
+      padding: 32px;
+      width: 420px;
+      max-width: 95vw;
+      border: 1px solid #334155;
+    }
+
+    .modal h2 {
+      color: #38bdf8;
+      margin-bottom: 20px;
+      font-size: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #38bdf8;
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .form-buttons .btn { flex: 1; }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: #1e293b;
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      color: #94a3b8;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    th:hover { color: #38bdf8; }
+
+    th .sort-arrow { margin-left: 4px; font-size: 10px; }
+
+    td {
+      padding: 12px 16px;
+      border-top: 1px solid #1e293b;
+      white-space: nowrap;
+    }
+
+    tr:nth-child(even) { background: rgba(30, 41, 59, 0.4); }
+
+    tr:hover { background: rgba(56, 189, 248, 0.05); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-in-stock   { background: #064e3b; color: #6ee7b7; }
+    .status-issued     { background: #78350f; color: #fcd34d; }
+    .status-retired    { background: #7f1d1d; color: #fca5a5; }
+
+    .actions { display: flex; gap: 6px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #475569;
+    }
+
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .modal { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📦 Inventory Manager</h1>
+  <p class="subtitle">Track items with auto-generated serial numbers — data saved in your browser</p>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="value" id="statTotal">0</div>
+      <div class="label">Total Items</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="statInStock">0</div>
+      <div class="label">In Stock</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="statIssued">0</div>
+      <div class="label">Issued</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="statRetired">0</div>
+      <div class="label">Retired</div>
+    </div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <input type="text" id="searchBox" placeholder="🔍  Search by serial number, name, or category…">
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Item</button>
+    <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="btn btn-secondary" onclick="importCSV()">⬆ Import CSV</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('serial_number')">Serial # <span class="sort-arrow" id="sort-serial_number"></span></th>
+          <th onclick="sortBy('name')">Name <span class="sort-arrow" id="sort-name"></span></th>
+          <th onclick="sortBy('category')">Category <span class="sort-arrow" id="sort-category"></span></th>
+          <th onclick="sortBy('quantity')">Qty <span class="sort-arrow" id="sort-quantity"></span></th>
+          <th onclick="sortBy('location')">Location <span class="sort-arrow" id="sort-location"></span></th>
+          <th onclick="sortBy('date_added')">Date Added <span class="sort-arrow" id="sort-date_added"></span></th>
+          <th onclick="sortBy('status')">Status <span class="sort-arrow" id="sort-status"></span></th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display: none;">
+      <div class="icon">📋</div>
+      <div>No items yet. Click <strong>+ Add Item</strong> to get started.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Add New Item</h2>
+    <input type="hidden" id="editId">
+
+    <div class="form-group">
+      <label>Serial Number (auto-generated)</label>
+      <input type="text" id="fSerialNumber" readonly>
+    </div>
+
+    <div class="form-group">
+      <label>Item Name *</label>
+      <input type="text" id="fName" placeholder="e.g. Dell XPS 15 Laptop">
+    </div>
+
+    <div class="form-group">
+      <label>Category</label>
+      <input type="text" id="fCategory" placeholder="e.g. Electronics, Furniture" list="categoryList">
+      <datalist id="categoryList"></datalist>
+    </div>
+
+    <div class="form-group">
+      <label>Quantity</label>
+      <input type="number" id="fQuantity" value="1" min="0">
+    </div>
+
+    <div class="form-group">
+      <label>Location</label>
+      <input type="text" id="fLocation" placeholder="e.g. Warehouse A, Office 302">
+    </div>
+
+    <div class="form-group">
+      <label>Status</label>
+      <select id="fStatus">
+        <option value="In Stock">In Stock</option>
+        <option value="Issued">Issued</option>
+        <option value="Retired">Retired</option>
+      </select>
+    </div>
+
+    <div class="form-buttons">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input for CSV import -->
+<input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="handleCSVImport(event)">
+
+<script>
+  // ── Data Layer ──
+  const STORAGE_KEY = 'inventory_items';
+  const COUNTER_KEY = 'inventory_counter';
+
+  function loadItems() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }
+
+  function saveItems(items) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+
+  function getNextCounter() {
+    let counter = parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10);
+    counter++;
+    localStorage.setItem(COUNTER_KEY, String(counter));
+    return counter;
+  }
+
+  function generateSerialNumber() {
+    const year = new Date().getFullYear();
+    const num = getNextCounter();
+    return `SN-${year}-${String(num).padStart(4, '0')}`;
+  }
+
+  // ── State ──
+  let currentSort = { field: 'date_added', asc: false };
+
+  // ── Render ──
+  function render() {
+    const items = loadItems();
+    const query = document.getElementById('searchBox').value.toLowerCase();
+
+    // Filter
+    let filtered = items;
+    if (query) {
+      filtered = items.filter(item =>
+        item.serial_number.toLowerCase().includes(query) ||
+        item.name.toLowerCase().includes(query) ||
+        (item.category || '').toLowerCase().includes(query) ||
+        (item.location || '').toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let va = a[currentSort.field] || '';
+      let vb = b[currentSort.field] || '';
+      if (currentSort.field === 'quantity') {
+        va = Number(va); vb = Number(vb);
+      } else if (currentSort.field === 'date_added') {
+        va = new Date(va); vb = new Date(vb);
+      } else {
+        va = String(va).toLowerCase();
+        vb = String(vb).toLowerCase();
+      }
+      if (va < vb) return currentSort.asc ? -1 : 1;
+      if (va > vb) return currentSort.asc ? 1 : -1;
+      return 0;
+    });
+
+    // Update sort arrows
+    document.querySelectorAll('.sort-arrow').forEach(el => el.textContent = '');
+    const arrowEl = document.getElementById(`sort-${currentSort.field}`);
+    if (arrowEl) arrowEl.textContent = currentSort.asc ? '▲' : '▼';
+
+    // Stats
+    document.getElementById('statTotal').textContent = items.length;
+    document.getElementById('statInStock').textContent = items.filter(i => i.status === 'In Stock').length;
+    document.getElementById('statIssued').textContent = items.filter(i => i.status === 'Issued').length;
+    document.getElementById('statRetired').textContent = items.filter(i => i.status === 'Retired').length;
+
+    // Table
+    const tbody = document.getElementById('tableBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(item => {
+      const statusClass = item.status === 'In Stock' ? 'status-in-stock'
+                        : item.status === 'Issued'   ? 'status-issued'
+                        :                               'status-retired';
+      return `
+        <tr>
+          <td><strong>${esc(item.serial_number)}</strong></td>
+          <td>${esc(item.name)}</td>
+          <td>${esc(item.category || '—')}</td>
+          <td>${item.quantity}</td>
+          <td>${esc(item.location || '—')}</td>
+          <td>${item.date_added}</td>
+          <td><span class="status-badge ${statusClass}">${esc(item.status)}</span></td>
+          <td class="actions">
+            <button class="btn btn-edit" onclick="openEditModal('${item.id}')">Edit</button>
+            <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Delete</button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    // Update category datalist
+    const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
+    document.getElementById('categoryList').innerHTML =
+      categories.map(c => `<option value="${esc(c)}">`).join('');
+  }
+
+  function esc(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ── Sort ──
+  function sortBy(field) {
+    if (currentSort.field === field) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.field = field;
+      currentSort.asc = true;
+    }
+    render();
+  }
+
+  // ── Modal ──
+  function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Add New Item';
+    document.getElementById('editId').value = '';
+    document.getElementById('fSerialNumber').value = generateSerialNumber();
+    document.getElementById('fName').value = '';
+    document.getElementById('fCategory').value = '';
+    document.getElementById('fQuantity').value = '1';
+    document.getElementById('fLocation').value = '';
+    document.getElementById('fStatus').value = 'In Stock';
+    document.getElementById('modal').classList.add('active');
+    document.getElementById('fName').focus();
+  }
+
+  function openEditModal(id) {
+    const items = loadItems();
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    document.getElementById('modalTitle').textContent = 'Edit Item';
+    document.getElementById('editId').value = id;
+    document.getElementById('fSerialNumber').value = item.serial_number;
+    document.getElementById('fName').value = item.name;
+    document.getElementById('fCategory').value = item.category || '';
+    document.getElementById('fQuantity').value = item.quantity;
+    document.getElementById('fLocation').value = item.location || '';
+    document.getElementById('fStatus').value = item.status;
+    document.getElementById('modal').classList.add('active');
+    document.getElementById('fName').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+  }
+
+  function saveItem() {
+    const name = document.getElementById('fName').value.trim();
+    if (!name) {
+      alert('Item name is required.');
+      return;
+    }
+
+    const editId = document.getElementById('editId').value;
+    const items = loadItems();
+
+    if (editId) {
+      // Update existing
+      const idx = items.findIndex(i => i.id === editId);
+      if (idx === -1) return;
+      items[idx].name     = name;
+      items[idx].category = document.getElementById('fCategory').value.trim();
+      items[idx].quantity = parseInt(document.getElementById('fQuantity').value, 10) || 0;
+      items[idx].location = document.getElementById('fLocation').value.trim();
+      items[idx].status   = document.getElementById('fStatus').value;
+    } else {
+      // Add new
+      const newItem = {
+        id:            crypto.randomUUID(),
+        serial_number: document.getElementById('fSerialNumber').value,
+        name:          name,
+        category:      document.getElementById('fCategory').value.trim(),
+        quantity:       parseInt(document.getElementById('fQuantity').value, 10) || 0,
+        location:      document.getElementById('fLocation').value.trim(),
+        status:        document.getElementById('fStatus').value,
+        date_added:    new Date().toISOString().split('T')[0]
+      };
+      items.push(newItem);
+    }
+
+    saveItems(items);
+    closeModal();
+    render();
+  }
+
+  // ── Delete ──
+  function deleteItem(id) {
+    if (!confirm('Delete this item?')) return;
+    const items = loadItems().filter(i => i.id !== id);
+    saveItems(items);
+    render();
+  }
+
+  // ── Export CSV ──
+  function exportCSV() {
+    const items = loadItems();
+    if (items.length === 0) { alert('Nothing to export.'); return; }
+
+    const headers = ['Serial Number', 'Name', 'Category', 'Quantity', 'Location', 'Date Added', 'Status'];
+    const rows = items.map(i => [
+      i.serial_number, i.name, i.category || '', i.quantity, i.location || '', i.date_added, i.status
+    ]);
+
+    let csv = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csv += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Import CSV ──
+  function importCSV() {
+    document.getElementById('csvFileInput').click();
+  }
+
+  function handleCSVImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split('\n').filter(l => l.trim());
+      if (lines.length < 2) { alert('CSV file is empty or has no data rows.'); return; }
+
+      // Skip header
+      const items = loadItems();
+      let added = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        if (cols.length < 2) continue;
+
+        items.push({
+          id:            crypto.randomUUID(),
+          serial_number: cols[0] || generateSerialNumber(),
+          name:          cols[1] || 'Unnamed',
+          category:      cols[2] || '',
+          quantity:       parseInt(cols[3], 10) || 1,
+          location:      cols[4] || '',
+          date_added:    cols[5] || new Date().toISOString().split('T')[0],
+          status:        cols[6] || 'In Stock'
+        });
+        added++;
+      }
+
+      saveItems(items);
+      render();
+      alert(`Imported ${added} item(s).`);
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (inQuotes) {
+        if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; }
+        else if (ch === '"') inQuotes = false;
+        else current += ch;
+      } else {
+        if (ch === '"') inQuotes = true;
+        else if (ch === ',') { result.push(current.trim()); current = ''; }
+        else current += ch;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  }
+
+  // ── Init ──
+  document.getElementById('searchBox').addEventListener('input', render);
+
+  // Close modal on overlay click
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Close modal on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  render();
+</script>
+
+</body>
+</html>
