@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Habit Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        /* ---- Habit Name Editor ---- */
+        .habit-editor {
+            max-width: 700px;
+            margin: 0 auto 30px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 24px 28px;
+        }
+
+        .habit-editor h2 {
+            font-size: 1.1rem;
+            margin-bottom: 14px;
+            color: #ffd200;
+        }
+
+        .habit-names-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 20px;
+        }
+
+        .habit-names-grid label {
+            font-size: 0.85rem;
+            color: #bbb;
+        }
+
+        .habit-names-grid input {
+            width: 100%;
+            padding: 7px 12px;
+            border: 1px solid #555;
+            border-radius: 8px;
+            background: #1e1e2f;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .habit-names-grid input:focus {
+            border-color: #ffd200;
+        }
+
+        /* ---- Daily Check-in Card ---- */
+        .checkin-card {
+            max-width: 700px;
+            margin: 0 auto 30px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 24px 28px;
+        }
+
+        .checkin-card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+            color: #7ef29d;
+        }
+
+        .checkin-date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 18px;
+        }
+
+        .checkin-list {
+            list-style: none;
+        }
+
+        .checkin-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .checkin-list li:last-child { border-bottom: none; }
+
+        .checkin-list input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            accent-color: #7ef29d;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .checkin-list label {
+            font-size: 1rem;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 10px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(0,0,0,0.3); }
+
+        .btn-save {
+            background: linear-gradient(135deg, #7ef29d, #0ba360);
+            color: #111;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #111;
+            margin-left: 10px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e44d26, #f7971e);
+            color: #fff;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            padding: 8px 18px;
+        }
+
+        .saved-msg {
+            display: inline-block;
+            margin-left: 14px;
+            color: #7ef29d;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .saved-msg.show { opacity: 1; }
+
+        /* ---- History Table ---- */
+        .history-section {
+            max-width: 900px;
+            margin: 0 auto 40px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 24px 28px;
+            overflow-x: auto;
+        }
+
+        .history-section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: #82b1ff;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .history-controls select, .history-controls input {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background: #1e1e2f;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead th {
+            background: rgba(130, 177, 255, 0.15);
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: 600;
+            color: #82b1ff;
+            position: sticky;
+            top: 0;
+        }
+
+        thead th:first-child {
+            text-align: left;
+            min-width: 110px;
+        }
+
+        tbody td {
+            padding: 9px 8px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        tbody td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #ccc;
+            white-space: nowrap;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+
+        .dot.done {
+            background: #7ef29d;
+            box-shadow: 0 0 6px rgba(126, 242, 157, 0.4);
+        }
+
+        .dot.missed {
+            background: #444;
+        }
+
+        .dot.future {
+            background: transparent;
+            border: 2px dashed #444;
+        }
+
+        /* Streak & Stats */
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-item .val {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #f7971e, #ffd200);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-item .lbl {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .no-data {
+            color: #666;
+            font-style: italic;
+            padding: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .habit-names-grid { grid-template-columns: 1fr; }
+            h1 { font-size: 1.5rem; }
+            .history-section { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Daily Habit Tracker</h1>
+<p class="subtitle">Track 6 habits every day &mdash; build consistency, see your streaks!</p>
+
+<!-- Habit Name Editor -->
+<div class="habit-editor">
+    <h2>Your 6 Habits</h2>
+    <div class="habit-names-grid" id="habitNamesGrid"></div>
+    <button class="btn btn-clear" onclick="saveHabitNames()" style="margin-top:14px;">Save Names</button>
+    <span class="saved-msg" id="namesSavedMsg">Names saved!</span>
+</div>
+
+<!-- Daily Check-in -->
+<div class="checkin-card">
+    <h2>Today's Check-in</h2>
+    <p class="checkin-date" id="todayDate"></p>
+    <ul class="checkin-list" id="checkinList"></ul>
+    <div>
+        <button class="btn btn-save" onclick="saveCheckin()">Save Today</button>
+        <span class="saved-msg" id="checkinSavedMsg">Saved!</span>
+    </div>
+</div>
+
+<!-- History Table -->
+<div class="history-section">
+    <h2>History</h2>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="history-controls">
+        <label style="color:#aaa;font-size:0.9rem;">Show last</label>
+        <select id="dayRange" onchange="renderHistory()">
+            <option value="7" selected>7 days</option>
+            <option value="14">14 days</option>
+            <option value="30">30 days</option>
+            <option value="0">All time</option>
+        </select>
+        <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+    </div>
+
+    <div id="historyTableWrap"></div>
+</div>
+
+<script>
+    const STORAGE_KEY_HABITS = 'ht_habit_names';
+    const STORAGE_KEY_LOG    = 'ht_habit_log';
+    const DEFAULT_HABITS = [
+        'Exercise',
+        'Read 30 min',
+        'Drink 8 glasses of water',
+        'Meditate',
+        'No junk food',
+        'Sleep before 11 PM'
+    ];
+
+    /* ---- Helpers ---- */
+    function todayStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' +
+               String(d.getMonth()+1).padStart(2,'0') + '-' +
+               String(d.getDate()).padStart(2,'0');
+    }
+
+    function formatDate(ymd) {
+        const [y, m, d] = ymd.split('-');
+        const dt = new Date(+y, +m - 1, +d);
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return days[dt.getDay()] + ', ' + months[dt.getMonth()] + ' ' + +d;
+    }
+
+    function getHabits() {
+        const raw = localStorage.getItem(STORAGE_KEY_HABITS);
+        return raw ? JSON.parse(raw) : [...DEFAULT_HABITS];
+    }
+
+    function setHabits(arr) {
+        localStorage.setItem(STORAGE_KEY_HABITS, JSON.stringify(arr));
+    }
+
+    function getLog() {
+        const raw = localStorage.getItem(STORAGE_KEY_LOG);
+        return raw ? JSON.parse(raw) : {};
+    }
+
+    function setLog(log) {
+        localStorage.setItem(STORAGE_KEY_LOG, JSON.stringify(log));
+    }
+
+    function flash(el) {
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    /* ---- Habit Names ---- */
+    function renderHabitNameInputs() {
+        const grid = document.getElementById('habitNamesGrid');
+        const habits = getHabits();
+        grid.innerHTML = '';
+        for (let i = 0; i < 6; i++) {
+            const wrap = document.createElement('div');
+            wrap.innerHTML = `
+                <label>Habit ${i+1}</label>
+                <input type="text" id="habitName${i}" value="${habits[i] || ''}" maxlength="40" placeholder="e.g. Exercise">
+            `;
+            grid.appendChild(wrap);
+        }
+    }
+
+    function saveHabitNames() {
+        const arr = [];
+        for (let i = 0; i < 6; i++) {
+            const v = document.getElementById('habitName'+i).value.trim();
+            arr.push(v || DEFAULT_HABITS[i]);
+        }
+        setHabits(arr);
+        flash(document.getElementById('namesSavedMsg'));
+        renderCheckin();
+        renderHistory();
+    }
+
+    /* ---- Daily Check-in ---- */
+    function renderCheckin() {
+        const today = todayStr();
+        document.getElementById('todayDate').textContent = formatDate(today);
+        const habits = getHabits();
+        const log = getLog();
+        const todayLog = log[today] || {};
+
+        const ul = document.getElementById('checkinList');
+        ul.innerHTML = '';
+        habits.forEach((h, i) => {
+            const li = document.createElement('li');
+            const checked = todayLog[i] ? 'checked' : '';
+            li.innerHTML = `
+                <input type="checkbox" id="chk${i}" ${checked}>
+                <label for="chk${i}">${h}</label>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    function saveCheckin() {
+        const today = todayStr();
+        const log = getLog();
+        const entry = {};
+        for (let i = 0; i < 6; i++) {
+            entry[i] = document.getElementById('chk'+i).checked;
+        }
+        log[today] = entry;
+        setLog(log);
+        flash(document.getElementById('checkinSavedMsg'));
+        renderHistory();
+    }
+
+    /* ---- History & Stats ---- */
+    function renderHistory() {
+        const habits = getHabits();
+        const log = getLog();
+        const range = +document.getElementById('dayRange').value;
+        const today = todayStr();
+
+        // Collect sorted dates
+        let dates = Object.keys(log).sort();
+        if (range > 0) {
+            // last N days from today
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - range + 1);
+            const cutStr = cutoff.getFullYear() + '-' +
+                           String(cutoff.getMonth()+1).padStart(2,'0') + '-' +
+                           String(cutoff.getDate()).padStart(2,'0');
+            dates = dates.filter(d => d >= cutStr);
+        }
+
+        // Fill missing dates in range
+        if (dates.length > 0) {
+            const start = new Date(dates[0] + 'T00:00:00');
+            const end = new Date(today + 'T00:00:00');
+            const allDates = [];
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+                allDates.push(d.getFullYear() + '-' +
+                    String(d.getMonth()+1).padStart(2,'0') + '-' +
+                    String(d.getDate()).padStart(2,'0'));
+            }
+            dates = allDates;
+            if (range > 0) dates = dates.slice(-range);
+        }
+
+        // Stats
+        renderStats(habits, log, dates, today);
+
+        const wrap = document.getElementById('historyTableWrap');
+        if (dates.length === 0) {
+            wrap.innerHTML = '<p class="no-data">No entries yet. Complete your first check-in above!</p>';
+            return;
+        }
+
+        // Build table – dates as columns, habits as rows
+        let html = '<table><thead><tr><th>Habit</th>';
+        dates.forEach(d => {
+            const short = d.slice(5); // MM-DD
+            html += `<th>${short}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        habits.forEach((h, i) => {
+            html += `<tr><td>${h}</td>`;
+            dates.forEach(d => {
+                const entry = log[d];
+                if (!entry) {
+                    const cls = d > today ? 'future' : 'missed';
+                    html += `<td><span class="dot ${cls}"></span></td>`;
+                } else {
+                    html += `<td><span class="dot ${entry[i] ? 'done' : 'missed'}"></span></td>`;
+                }
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        wrap.innerHTML = html;
+    }
+
+    function renderStats(habits, log, dates, today) {
+        const bar = document.getElementById('statsBar');
+        const allDates = Object.keys(log).sort();
+        if (allDates.length === 0) { bar.innerHTML = ''; return; }
+
+        // Total check-ins
+        let totalDone = 0, totalPossible = allDates.length * 6;
+        allDates.forEach(d => {
+            for (let i = 0; i < 6; i++) if (log[d][i]) totalDone++;
+        });
+
+        // Current streak (consecutive days with at least 1 habit done, ending today)
+        let streak = 0;
+        const d = new Date(today + 'T00:00:00');
+        while (true) {
+            const ds = d.getFullYear() + '-' +
+                       String(d.getMonth()+1).padStart(2,'0') + '-' +
+                       String(d.getDate()).padStart(2,'0');
+            const entry = log[ds];
+            if (!entry) break;
+            let any = false;
+            for (let i = 0; i < 6; i++) if (entry[i]) any = true;
+            if (!any) break;
+            streak++;
+            d.setDate(d.getDate()-1);
+        }
+
+        // Best habit
+        const counts = habits.map((_,i) => {
+            let c = 0; allDates.forEach(d => { if (log[d][i]) c++; }); return c;
+        });
+        const bestIdx = counts.indexOf(Math.max(...counts));
+
+        bar.innerHTML = `
+            <div class="stat-item"><div class="val">${allDates.length}</div><div class="lbl">Days Tracked</div></div>
+            <div class="stat-item"><div class="val">${Math.round(totalDone/totalPossible*100)}%</div><div class="lbl">Completion</div></div>
+            <div class="stat-item"><div class="val">${streak}</div><div class="lbl">Day Streak</div></div>
+            <div class="stat-item"><div class="val">${habits[bestIdx]}</div><div class="lbl">Best Habit</div></div>
+        `;
+    }
+
+    /* ---- Clear ---- */
+    function clearAllData() {
+        if (!confirm('Delete ALL habit tracking data? This cannot be undone.')) return;
+        localStorage.removeItem(STORAGE_KEY_HABITS);
+        localStorage.removeItem(STORAGE_KEY_LOG);
+        renderHabitNameInputs();
+        renderCheckin();
+        renderHistory();
+    }
+
+    /* ---- Init ---- */
+    renderHabitNameInputs();
+    renderCheckin();
+    renderHistory();
+</script>
+
+</body>
+</html>
