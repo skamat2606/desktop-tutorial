@@ -105,6 +105,22 @@
         }
 
         /* ── Check-in ── */
+        .date-selector {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .date-selector select {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+
         .checkin-date {
             font-size: 0.85rem;
             color: #64748b;
@@ -339,11 +355,15 @@
 
 <!-- Daily Check-in -->
 <div class="card">
-    <h2 class="green">Today's Check-in</h2>
+    <h2 class="green">Daily Check-in</h2>
+    <div class="date-selector">
+        <label style="color:#94a3b8;font-size:0.9rem;margin-right:8px;">Select day:</label>
+        <select id="checkinDateSelect" onchange="renderCheckin()"></select>
+    </div>
     <p class="checkin-date" id="todayDate"></p>
     <ul class="checkin-list" id="checkinList"></ul>
     <div>
-        <button class="btn btn-save" onclick="saveCheckin()">Save Today</button>
+        <button class="btn btn-save" onclick="saveCheckin()">Save</button>
         <span class="saved-msg" id="checkinSavedMsg">Saved!</span>
     </div>
 </div>
@@ -448,19 +468,48 @@
         renderHistory();
     }
 
+    /* ---- Date selector for past 3 days ---- */
+    function getEditableDates() {
+        const dates = [];
+        for (let offset = 0; offset <= 3; offset++) {
+            const d = new Date();
+            d.setDate(d.getDate() - offset);
+            dates.push(d.getFullYear() + '-' +
+                String(d.getMonth()+1).padStart(2,'0') + '-' +
+                String(d.getDate()).padStart(2,'0'));
+        }
+        return dates;
+    }
+
+    function getSelectedCheckinDate() {
+        return document.getElementById('checkinDateSelect').value;
+    }
+
+    function populateDateSelector() {
+        const sel = document.getElementById('checkinDateSelect');
+        sel.innerHTML = '';
+        const dates = getEditableDates();
+        dates.forEach((d, i) => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = formatDate(d) + (i === 0 ? ' (Today)' : '');
+            sel.appendChild(opt);
+        });
+    }
+
     /* ---- Daily Check-in ---- */
     function renderCheckin() {
-        const today = todayStr();
-        document.getElementById('todayDate').textContent = formatDate(today);
+        const selectedDate = getSelectedCheckinDate();
+        document.getElementById('todayDate').textContent = formatDate(selectedDate);
         const habits = getHabits();
         const log = getLog();
-        const todayLog = log[today] || {};
+        const dayLog = log[selectedDate] || {};
 
         const ul = document.getElementById('checkinList');
         ul.innerHTML = '';
         habits.forEach((h, i) => {
             const li = document.createElement('li');
-            const checked = todayLog[i] ? 'checked' : '';
+            const checked = dayLog[i] ? 'checked' : '';
             li.innerHTML = `
                 <input type="checkbox" id="chk${i}" ${checked}>
                 <label for="chk${i}">${h}</label>
@@ -470,13 +519,13 @@
     }
 
     function saveCheckin() {
-        const today = todayStr();
+        const selectedDate = getSelectedCheckinDate();
         const log = getLog();
         const entry = {};
         for (let i = 0; i < 6; i++) {
             entry[i] = document.getElementById('chk'+i).checked;
         }
-        log[today] = entry;
+        log[selectedDate] = entry;
         setLog(log);
         flash(document.getElementById('checkinSavedMsg'));
         renderHistory();
@@ -603,6 +652,7 @@
 
     /* ---- Init ---- */
     renderHabitNameInputs();
+    populateDateSelector();
     renderCheckin();
     renderHistory();
 </script>
