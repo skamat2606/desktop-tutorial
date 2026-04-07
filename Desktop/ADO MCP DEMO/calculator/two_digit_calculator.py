@@ -1,10 +1,10 @@
-"""Two-Digit Calculator — Python CLI version."""
+"""Three-Digit Calculator — Python CLI version."""
 
-MAX_DIGITS = 2
+MAX_DIGITS = 3
 
 
 def get_number(prompt: str) -> float:
-    """Ask the user for a number with at most 2 digits."""
+    """Ask the user for a number with at most 3 digits."""
     while True:
         raw = input(prompt).strip()
         try:
@@ -16,11 +16,11 @@ def get_number(prompt: str) -> float:
         # Check the digit count (ignore minus sign and decimal point)
         int_part = str(int(abs(value)))
         if len(int_part) > MAX_DIGITS:
-            print(f"  ⚠  Max {MAX_DIGITS} digits per number (−99 to 99).")
+            print(f"  ⚠  Max {MAX_DIGITS} digits per number (−999 to 999).")
             continue
 
-        if abs(value) > 99:
-            print(f"  ⚠  Number must be between −99 and 99.")
+        if abs(value) > 999:
+            print(f"  ⚠  Number must be between −999 and 999.")
             continue
 
         return value
@@ -62,9 +62,9 @@ def main():
     op_symbols = {"+": "+", "-": "−", "*": "×", "/": "÷"}
 
     print("=" * 36)
-    print("   🔢  2-Digit Calculator  🔢")
+    print("   🔢  3-Digit Calculator  🔢")
     print("=" * 36)
-    print("Each number must be between −99 and 99.")
+    print("Each number must be between −999 and 999.")
     print("Type 'q' to quit.\n")
 
     while True:
@@ -78,8 +78,8 @@ def main():
         except ValueError:
             print("  ⚠  Invalid input.\n")
             continue
-        if abs(a) > 99 or len(str(int(abs(a)))) > MAX_DIGITS:
-            print(f"  ⚠  Number must be between −99 and 99.\n")
+        if abs(a) > 999 or len(str(int(abs(a)))) > MAX_DIGITS:
+            print(f"  ⚠  Number must be between −999 and 999.\n")
             continue
 
         # Operator

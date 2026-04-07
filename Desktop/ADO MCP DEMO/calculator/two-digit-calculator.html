@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2-Digit Calculator</title>
+  <title>3-Digit Calculator</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -157,7 +157,7 @@
   </nav>
   <div class="page-body">
   <div class="calculator">
-    <h2>2-Digit Calculator</h2>
+    <h2>3-Digit Calculator</h2>
     <div class="display">
       <div class="expression" id="expression"></div>
       <div class="result" id="result">0</div>
@@ -190,7 +190,7 @@
   </div>
 
   <script>
-    const MAX_DIGITS = 2; // Limit each operand to 2 digits
+    const MAX_DIGITS = 3; // Limit each operand to 3 digits
     let currentInput = '';
     let firstOperand = null;
     let operator = null;
@@ -220,7 +220,7 @@
       // Strip negative sign for length check
       const raw = currentInput.replace('-', '');
       if (raw.length >= MAX_DIGITS) {
-        showError('Max 2 digits per number');
+        showError('Max 3 digits per number');
         return;
       }
 
@@ -262,9 +262,9 @@
       const second = currentInput !== '' ? parseFloat(currentInput) : null;
       if (second === null) return;
 
-      // Validate both operands are within 2-digit range (-99 to 99)
-      if (Math.abs(firstOperand) > 99 || Math.abs(second) > 99) {
-        showError('Operands must be ≤ 2 digits');
+      // Validate both operands are within 3-digit range (-999 to 999)
+      if (Math.abs(firstOperand) > 999 || Math.abs(second) > 999) {
+        showError('Operands must be ≤ 3 digits');
         return;
       }
 
